@@ -15,7 +15,6 @@ logging.basicConfig(level=logging.INFO)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 logging.info(f"Using device: {device}")
 
-# 1. Model Definition
 class VotePredictor(nn.Module):
     def __init__(self, num_bills, num_legislators, latent_dim=2):
         super(VotePredictor, self).__init__()
@@ -39,7 +38,6 @@ class VotePredictor(nn.Module):
         logits = global_bias + legislator_bias + bill_bias + interaction
         return torch.sigmoid(logits)
 
-# 2. Dataset and DataLoader
 class VotingDataset(Dataset):
     def __init__(self, data):
         self.data = data
@@ -54,8 +52,6 @@ class VotingDataset(Dataset):
 logging.info("Loading data")
 with open('data/divisions.json') as f:
     data = json.load(f)
-
-# data = pd.read_csv('data/Hall_votes_encoded.csv').values
 
 train_data, test_data = train_test_split(data, test_size=0.2, random_state=42)
 train_dataset = VotingDataset(train_data)
