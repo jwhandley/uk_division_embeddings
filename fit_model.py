@@ -15,6 +15,7 @@ logging.basicConfig(level=logging.INFO)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 logging.info(f"Using device: {device}")
 
+# 1. Model Definition
 class VotePredictor(nn.Module):
     def __init__(self, num_bills, num_legislators, latent_dim=2):
         super(VotePredictor, self).__init__()
@@ -38,6 +39,7 @@ class VotePredictor(nn.Module):
         logits = global_bias + legislator_bias + bill_bias + interaction
         return torch.sigmoid(logits)
 
+# 2. Dataset and DataLoader
 class VotingDataset(Dataset):
     def __init__(self, data):
         self.data = data
@@ -50,10 +52,12 @@ class VotingDataset(Dataset):
         return bill_id, legislator_id, vote
 
 logging.info("Loading data")
-with open('data/divisions.json') as f:
-    data = json.load(f)
+# with open('data/divisions.json') as f:
+#     data = json.load(f)
 
-train_data, test_data = train_test_split(data, test_size=0.2, random_state=42)
+data = pd.read_csv('data/H117_votes_encoded.csv').values
+
+train_data, test_data = train_test_split(data, test_size=0.2, random_state=42, stratify=data[:, 2])
 train_dataset = VotingDataset(train_data)
 test_dataset = VotingDataset(test_data)
 
@@ -69,10 +73,10 @@ logging.info(f"Number of legislators: {num_legislators}")
 
 model = VotePredictor(num_bills, num_legislators).to(device)
 criterion = nn.BCELoss()
-optimizer = optim.Adam(model.parameters(), lr=5e-4, weight_decay=1e-6)
+optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
 epoch_losses = []
-num_epochs = 5
+num_epochs = 40
 for epoch in tqdm(range(num_epochs), desc="Epochs", leave=False):
     model.train()
     
